@@ -10,7 +10,23 @@ import tempfile
 HOOK = 0x9646
 EXTENSION = 0xA7C0
 ORIGINAL_HANDLER = 0x9654
-EXPECTED_SHA256 = '966742624d64e5d6de7efed1dc10ff7e080f5e99298397409cfb5264b5568844'
+SUPPORTED_FIRMWARE = {
+    "1.16": {
+        "sha256": "966742624d64e5d6de7efed1dc10ff7e080f5e99298397409cfb5264b5568844",
+    },
+}
+
+
+def verify_firmware(data):
+    digest = hashlib.sha256(data).hexdigest()
+    for version, info in SUPPORTED_FIRMWARE.items():
+        if digest == info["sha256"]:
+            print(f"Detected supported firmware V{version}")
+            return version
+    raise ValueError(
+        "Unsupported firmware image. "
+        "This patch currently supports only Ducky One 3 SF RGB V1.16."
+    )
 
 
 def encode_bl(source, target):
@@ -27,14 +43,17 @@ def encode_bl(source, target):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('firmware', type=Path, help='Original unmodified firmware binary')
+    parser.add_argument('firmware', type=Path, help='Original, unmodified Ducky One 3 SF RGB V1.16 firmware binary')
     parser.add_argument('--output', type=Path, default=Path('ducky_one3_sf_rgb_v1.bin'))
     parser.add_argument('--clang', default='clang')
     parser.add_argument('--objcopy', default='llvm-objcopy')
     args = parser.parse_args()
     original = args.firmware.read_bytes()
+    try:
+        verify_firmware(original)
+    except ValueError as exc:
+        parser.error(str(exc))
     assert len(original) == 42942, f'Unexpected firmware length: {len(original)}'
-    assert hashlib.sha256(original).hexdigest() == EXPECTED_SHA256, 'Firmware SHA256 mismatch: refusing patch'
     assert original[HOOK:HOOK+4] == bytes.fromhex('00 f0 05 f8'), 'Original USB hook mismatch'
     with tempfile.TemporaryDirectory() as tmp:
         elf = Path(tmp)/'rgb.elf'
