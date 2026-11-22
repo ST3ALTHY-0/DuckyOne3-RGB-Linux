@@ -7,6 +7,9 @@
 > All major functionality has been developed through experimentation with physical hardware. AI-generated code and technical findings are tested and refined against a real Ducky One 3 SF RGB keyboard.
 >
 > As this is an experimental reverse-engineering project, AI-generated code and findings should be independently reviewed before use, particularly when modifying firmware.
+>
+> This code and repo is still mostly for my own use and I plan to polish it when I actually get the functionality I want.
+> 
 
 ## Overview
 
