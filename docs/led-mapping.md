@@ -15,6 +15,16 @@ For example, larger keys such as the spacebar appear to occupy multiple logical 
 
 The ultimate goal is to translate these logical addresses into meaningful key identifiers so users can select and customize individual keys through a graphical application.
 
+## Extract the firmware mapping
+
+From the project directory, pass the path to the original firmware image.
+
+```sh
+python3 tools/extract_led_mapping.py --firmware /path/to/ducky_one3_sf_firmware.bin
+```
+
+The script prints the mapping and writes the decompressed startup data to `startup_sram.bin` in the current directory.
+
 ## 1. Logical LED Addressing
 
 The V3 firmware accepts two values identifying a logical LED position.
