@@ -8,8 +8,7 @@
 >
 > As this is an experimental reverse-engineering project, AI-generated code and findings should be independently reviewed before use, particularly when modifying firmware.
 >
-> This code and repo is still mostly for my own use and I plan to polish it when I actually get the functionality I want.
-> 
+>This code and repo is still mostly for my own use and I plan to polish it when I actually get the functionality I want.
 
 ## Overview
 
@@ -336,7 +335,7 @@ The tested V3 patched image has SHA-256:
 78bd898284478e9b60ca7d3c4bfc8c4175e7f690961b68d42481143734609258
 ```
 
-The patch is specific to this firmware image. Function addresses and memory layouts may differ in other versions.
+The patch supports only the original Ducky One 3 SF RGB V1.16 firmware image with the SHA-256 shown above. The build script checks the hash before assembling or patching the image.
 
 ### Building
 
