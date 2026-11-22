@@ -1,0 +1,32 @@
+__pycache__/
+*.py[cod]
+.venv/
+*.bin
+*.elf
+*.o
+*.exe
+
+cat > .gitignore <<'EOF'
+# Proprietary firmware and generated binaries
+*.bin
+*.hex
+*.elf
+*.o
+*.so
+
+# Extracted/decompiled official updater
+DecompiledUpdater/
+*.exe
+*.dll
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local files
+.env
+*.log
+*.bak
+EOF
