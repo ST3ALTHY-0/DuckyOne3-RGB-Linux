@@ -29,21 +29,24 @@ These interfaces should not be confused. The custom RGB commands are intended fo
 
 ### Device Discovery
 
-A future software controller should identify the correct HID interface using its USB identifiers and report descriptor rather than relying on an operating-system-specific device path.
+Linux tools enumerate `/sys/class/hidraw/hidraw*`, match USB VID/PID, and locate the corresponding USB interface. They require HID class `0x03`, a 64-byte interrupt IN endpoint, and a 64-byte interrupt OUT endpoint. Multiple matches for a mode are rejected. Use the discovered node since hidraw numbers can change on reconnect.
 
-For example, Linux may expose the interface as:
+The official updater recognizes `0416:3F00` as an alternative LDROM identifier. That identifier is untested on the project keyboard and is excluded from automatic discovery. A future cross-platform client will need an OS-appropriate HID backend.
 
-```text
-/dev/hidraw6
-```
+### APROM reboot protocols
 
-This path is not permanent and may change when the keyboard is disconnected or other HID devices are added.
+Both APROM protocols use `3233:5311`. The official updater supports both. The tools identify the application collection from the report descriptor.
 
-Cross-platform software should eventually use an appropriate HID library to discover and communicate with the device.
+| Firmware evidence | Usage page | Usage | Reboot payload prefix |
+|---|---|---|---|
+| Legacy protocol observed on V1.10 | `0x0001` | `0x0000` | `CC` |
+| Tested on stock V1.16 and modified V3 | `0xFF00` | `0x0001` | `00 3A 01 09 01 04 00 01 01` |
+
+Pad the payload to 64 bytes with zeros. Linux hidraw adds a leading zero report ID for a 65-byte host write. This leading report ID is separate from the initial zero in the newer payload. An unrecognized application collection is rejected. Earlier V1.16 recovery attempts sent the legacy command, which explains the failure to enter LDROM.
 
 ## 2. HID Report Descriptor
 
-The tested application firmware exposes a vendor-defined HID interface.
+Stock V1.16 and the tested V3 firmware expose a vendor-defined HID interface.
 
 The observed report descriptor is:
 
@@ -87,7 +90,7 @@ Example:
 ```python
 payload = bytearray(64)
 
-with open("/dev/hidraw6", "wb", buffering=0) as device:
+with open("/dev/hidrawN", "wb", buffering=0) as device:
     device.write(b"\x00" + payload)
 ```
 
@@ -276,7 +279,7 @@ def send_rgb(device_path, bank, index, red, green, blue):
 
 
 send_rgb(
-    "/dev/hidraw6",
+    "/dev/hidrawN",
     bank=0,
     index=0,
     red=255,
@@ -287,7 +290,7 @@ send_rgb(
 
 This example uses Linux `hidraw` directly.
 
-It is not a complete cross-platform implementation, and `/dev/hidraw6` is only an example path.
+It is not a complete cross-platform implementation, and `/dev/hidrawN` is only an example path.
 
 A successful write means the operating system accepted the report. It does not independently confirm that the keyboard applied the requested color.
 
@@ -442,7 +445,7 @@ The following test sends a red RGB command to every logical address.
 ```python
 import time
 
-device_path = "/dev/hidraw6"
+device_path = "/dev/hidrawN"
 
 with open(device_path, "wb", buffering=0) as device:
     for bank in range(5):
@@ -634,7 +637,6 @@ The following command identifiers were identified during bootloader investigatio
 
 | Command | Purpose |
 |---|---|
-| `0xCC` | Request bootloader entry from APROM |
 | `0xAE` | Connect to bootloader |
 | `0xA4` | Synchronize packet numbering |
 | `0xA6` | Read bootloader version |

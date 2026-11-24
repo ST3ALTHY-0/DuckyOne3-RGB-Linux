@@ -1,32 +1,25 @@
-__pycache__/
-*.py[cod]
-.venv/
-*.bin
-*.elf
-*.o
-*.exe
-
-cat > .gitignore <<'EOF'
-# Proprietary firmware and generated binaries
-*.bin
-*.hex
+# Firmware images, programmer dumps, and build outputs
+*.[bB][iI][nN]
+*.[hH][eE][xX]
 *.elf
 *.o
 *.so
+*.dump
+*.rom
+/recovery_backup/
+/firmware_backup/
 
-# Extracted/decompiled official updater
-DecompiledUpdater/
-*.exe
-*.dll
+# Vendor updater and decompiled source
+[Dd]ecompiled[Uu]pdater/
+*.[eE][xX][eE]
+*.[dD][lL][lL]
 
-# Python
+# Python and local files
 __pycache__/
-*.pyc
+*.py[cod]
 .venv/
 venv/
-
-# Local files
 .env
 *.log
 *.bak
-EOF
+*.config-backup

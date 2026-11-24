@@ -34,9 +34,7 @@ The long-term vision is a cross-platform keyboard management application support
 
 The project currently focuses on the **Ducky One 3 SF RGB**, which serves as the development and testing platform.
 
-Other Ducky One 3 keyboards may be able to use the firmare tools to flash your own firmware your model, but please dont flash any firmware made for the One 3 SF to another model.
-
-Other Ducky series keyboards should not use the firmware flasher for their own keyboard without modifying it for your board. Every firmware I have looked at outside the One 3 family is substanially different enough that I am dont believe it will work without heavy modification.
+Firmware programming is limited to the exact images and hardware configuration in the [compatibility table](#supported-hardware). Other versions and revisions require separate validation.
 
 ---
 
@@ -224,9 +222,14 @@ The goal is to expose more of the keyboard's existing functionality to external 
 | Bootloader version | `0x33` |
 | MCU product ID | `0x01205212` |
 
-Other Ducky One 3 models may use similar hardware or firmware, but compatibility has not yet been established.
+| Firmware or hardware | Communication evidence | Firmware modification support |
+|---|---|---|
+| Ducky One 3 SF RGB, exact stock V1.16 and verified V3 image | LDROM entry and exit verified on both | V1.16 patch input and V3 programming verified on the tested hardware profile. Stock V1.16 USB restoration also verified. |
+| Ducky One 3 SF RGB V1.10 | Legacy APROM reboot protocol observed | RGB patch and programming unvalidated |
+| Other One 3 SF RGB firmware, hardware revisions, or configurations | Untested unless separately identified | No verified programming profile |
+| Other Ducky models | Outside the tested scope | Unsupported |
 
-**Do not flash the experimental firmware onto an unverified keyboard model or hardware revision.**
+USB discovery establishes communication compatibility. Firmware programming additionally requires the exact image hash, size, and a matching LDROM version, MCU product ID, CONFIG0, and CONFIG1. The verified V1.16 setup reports CONFIG0 `0xF7FFFF7C` and CONFIG1 `0x00033200`. The tools never write configuration registers. Current device access uses Linux hidraw. The report formats and compatibility profiles can be reused with a future platform-specific transport.
 
 ---
 
@@ -346,7 +349,7 @@ The original proprietary firmware image is not distributed.
 Example build command:
 
 ```bash
-python3 build_patch.py \
+python3 firmware/build_patch.py \
   ../ducky_one3_sf_firmware.bin \
   --output ducky_one3_sf_rgb_v3.bin
 ```
@@ -370,7 +373,8 @@ The project includes experimental tools for identifying the bootloader and trans
 ### Bootloader Identification
 
 ```bash
-sudo python3 inspect_ducky_ldrom.py
+python3 tools/recovery/recover_usb.py --detect
+sudo python3 tools/recovery/recover_usb.py --inspect
 ```
 
 This script requests entry into the bootloader, reads device information, and attempts to return the keyboard to normal application mode.
@@ -380,13 +384,13 @@ This script requests entry into the bootloader, reads device information, and at
 Dry run:
 
 ```bash
-python3 flash_ducky_v3.py ducky_one3_sf_rgb_v3.bin
+python3 tools/flash_ducky_v3.py ducky_one3_sf_rgb_v3.bin
 ```
 
 Firmware programming:
 
 ```bash
-sudo python3 flash_ducky_v3.py \
+sudo python3 tools/flash_ducky_v3.py \
   ducky_one3_sf_rgb_v3.bin \
   --flash \
   --confirm FLASH-DUCKY-V3
@@ -394,7 +398,9 @@ sudo python3 flash_ducky_v3.py \
 
 During development, the V3 image was successfully transferred in 770 packets. The bootloader acknowledged all packets, and the keyboard resumed normal operation.
 
-These acknowledgments do not constitute full flash readback verification.
+Stock V1.16 was subsequently restored over USB. The restored keyboard could enter and exit LDROM, and the custom RGB command stopped affecting LEDs. This verifies functional restoration. It leaves full flash contents and erasure of residual extension bytes unverified.
+
+See the [USB recovery guide](tools/recovery/README.md) for recovery modes and limitations, and the [hardware recovery guide](tools/recovery/hardware-recovery.md) for the untested SWD/ICP path.
 
 **The flashing tools are experimental and should not be considered production-ready.**
 

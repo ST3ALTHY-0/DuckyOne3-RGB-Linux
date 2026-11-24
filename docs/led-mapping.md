@@ -246,44 +246,13 @@ For more information, see [hid-protocol.md](hid-protocol.md).
 
 ## 7. Testing Logical LED Addresses
 
-The following Python script sequentially sends a red RGB command to every logical address.
+Use the RGB sender with the verified V3 image on the tested Ducky One 3 SF RGB. The sender discovers the APROM interface on Linux when explicitly asked to send.
 
-It can be used to observe the relationship between logical addresses and physical keys.
-
-```python
-import time
-
-DEVICE = "/dev/hidraw6"
-
-with open(DEVICE, "wb", buffering=0) as device:
-    for bank in range(5):
-        for index in range(15):
-            print(f"Testing bank={bank}, index={index}")
-
-            report = bytearray(64)
-
-            report[1] = 0x3A
-            report[4] = 0x01
-            report[5] = 0x02
-
-            report[6] = bank
-            report[7] = index
-
-            report[8] = 255
-            report[9] = 0
-            report[10] = 0
-
-            written = device.write(b"\x00" + report)
-
-            if written != 65:
-                raise IOError(
-                    f"Incomplete HID write: {written}"
-                )
-
-            time.sleep(0.5)
+```sh
+python3 tools/send_rgb.py --bank 2 --index 7 --red 255 --green 0 --blue 0 --send
 ```
 
-Replace `/dev/hidraw6` with the correct vendor-defined HID interface.
+Repeat with other logical addresses to identify physical keys. The default invocation without `--send` prints the packet offline. This mapping was derived from the exact stock V1.16 image, and other versions or hardware revisions may map the LEDs differently.
 
 ### Testing Limitations
 

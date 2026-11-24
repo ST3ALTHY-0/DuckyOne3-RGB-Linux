@@ -28,7 +28,7 @@ The patch has been successfully flashed and tested on physical hardware.
 | Bootloader version | `0x33` |
 | MCU product ID | `0x01205212` |
 | CONFIG0 | `0xF7FFFF7C` |
-| CONFIG1 | `0x00032800` |
+| CONFIG1 on the verified V1.16 keyboard | `0x00033200` |
 
 The microcontroller contains 256 KiB of application flash memory.
 
@@ -63,6 +63,12 @@ The keyboard enumerates as:
 The bootloader supports commands for device identification, configuration inspection, firmware programming, and returning to application mode.
 
 The V3 patch modifies APROM only. It does not intentionally modify LDROM or the MCU configuration words.
+
+### Configuration and persistent storage
+
+The earlier recovery check expected CONFIG1 `0x00032800` and rejected the verified V1.16 keyboard. Stock V1.16 references `0x00033200` at binary offsets `0x46DC` and `0x9100`. Disassembly shows that the latter reference participates in persistent storage operations. Other observed storage addresses are `0x00033A00` and `0x00034200`.
+
+These findings suggest that storage placement can vary by firmware. The timing and cause of any CONFIG1 change and the complete register semantics remain unknown. Inspectors report configuration without requiring a profile. Programming requires the exact image and verified device identity tuple. The historical CONFIG1 value is excluded from the current profiles, and the tools leave configuration registers untouched.
 
 ## 2. Original Firmware Image
 
@@ -399,7 +405,7 @@ A matching output hash verifies that the generated file matches the tested V3 bu
 
 ## 8. Nuvoton Bootloader Protocol
 
-The keyboard can enter LDROM from APROM using a USB HID command.
+LDROM entry uses the [APROM reboot protocol selected from the HID descriptor](hid-protocol.md#aprom-reboot-protocols). The earlier V1.16 entry failure came from sending the legacy reboot command. Both stock V1.16 and modified V3 accepted the newer command.
 
 The tested bootloader identifies itself as:
 
@@ -413,7 +419,6 @@ MCU PID 0x01205212
 
 | Command | Description |
 |---|---|
-| `0xCC` | Request LDROM entry from APROM |
 | `0xAE` | Connect |
 | `0xA4` | Synchronize packet numbering |
 | `0xA6` | Read bootloader version |
@@ -445,7 +450,7 @@ First payload: 48 bytes
 Continuation payload: 56 bytes
 ```
 
-The bootloader acknowledged all 770 packets during the successful flash test.
+The bootloader acknowledged all 770 packets during the successful V3 flash test. Stock V1.16 is 42,942 bytes and requires 767 programming packets.
 
 After the transfer, the flasher sent `0xAB` to request execution of APROM.
 
@@ -543,7 +548,7 @@ Potential failure modes include:
 - Inability to enter LDROM.
 - Loss of normal keyboard functionality.
 
-Although the tested keyboard successfully recovered from temporary bootloader-entry issues after a USB power cycle, this does not establish a reliable recovery procedure for corrupted firmware.
+The tested keyboard was restored from V3 to stock V1.16 over USB, resumed normal operation, and could enter and exit LDROM. Custom RGB commands stopped affecting LEDs. Full readback, Data Flash restoration, and erasure of residual bytes beyond the shorter stock image remain unverified. See [USB recovery limitations](../tools/recovery/README.md#limits).
 
 The project does not currently provide a guaranteed unbricking method.
 
@@ -577,3 +582,7 @@ The project is independent and is not affiliated with or endorsed by Ducky or Nu
 Function names, memory layouts, and protocol interpretations may change as research progresses.
 
 All firmware modifications and flashing operations are performed at the user's own risk.
+
+### Read-only diagnostic APROM extension
+
+A future diagnostic build could expose bounded APROM, Data Flash and permitted LDROM readback, MCU-calculated checksums, bounded SRAM inspection, and hardware identification. Each read would require an explicit permitted address range and validated length. Arbitrary writes and execution are outside its scope. The extension would depend on working APROM, and no diagnostic extension or verified arbitrary USB flash readback command currently exists.
