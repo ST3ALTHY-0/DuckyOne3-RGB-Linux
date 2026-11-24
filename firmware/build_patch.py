@@ -53,8 +53,10 @@ def main():
         verify_firmware(original)
     except ValueError as exc:
         parser.error(str(exc))
-    assert len(original) == 42942, f'Unexpected firmware length: {len(original)}'
-    assert original[HOOK:HOOK+4] == bytes.fromhex('00 f0 05 f8'), 'Original USB hook mismatch'
+    if len(original) != 42942:
+        parser.error(f'Unexpected firmware length: {len(original)}')
+    if original[HOOK:HOOK+4] != bytes.fromhex('00 f0 05 f8'):
+        parser.error('Original USB hook mismatch')
     with tempfile.TemporaryDirectory() as tmp:
         elf = Path(tmp)/'rgb.elf'
         raw = Path(tmp)/'rgb.bin'
