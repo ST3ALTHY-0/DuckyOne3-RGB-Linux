@@ -44,10 +44,16 @@ def encode_bl(source, target):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('firmware', type=Path, help='Original, unmodified Ducky One 3 SF RGB V1.16 firmware binary')
-    parser.add_argument('--output', type=Path, default=Path('ducky_one3_sf_rgb_v1.bin'))
+    parser.add_argument('--output', type=Path, default=None)
     parser.add_argument('--clang', default='clang')
     parser.add_argument('--objcopy', default='llvm-objcopy')
+    parser.add_argument('--version', choices=('3', '4'), default='3')
+    parser.add_argument('--manifest', type=Path, help='V4 patch manifest destination')
+    parser.add_argument('--objdump', default='arm-none-eabi-objdump')
+    parser.add_argument('--nm', default='arm-none-eabi-nm')
     args = parser.parse_args()
+    if args.output is None:
+        args.output = Path('ducky_one3_sf_rgb_v1.bin' if args.version == '3' else 'ducky_one3_sf_rgb_v4.bin')
     original = args.firmware.read_bytes()
     try:
         verify_firmware(original)
@@ -57,6 +63,13 @@ def main():
         parser.error(f'Unexpected firmware length: {len(original)}')
     if original[HOOK:HOOK+4] != bytes.fromhex('00 f0 05 f8'):
         parser.error('Original USB hook mismatch')
+    if args.version == '4':
+        from build_v4 import write_v4
+        try:
+            write_v4(original, args, encode_bl)
+        except (OSError, ValueError, subprocess.CalledProcessError) as exc:
+            parser.error(str(exc))
+        return
     with tempfile.TemporaryDirectory() as tmp:
         elf = Path(tmp)/'rgb.elf'
         raw = Path(tmp)/'rgb.bin'
@@ -74,7 +87,11 @@ def main():
     assert patched[HOOK:HOOK+4] == bytes.fromhex('01 f0 bb f8')
     assert patched[:HOOK] == original[:HOOK]
     assert patched[HOOK+4:len(original)] == original[HOOK+4:]
-    args.output.write_bytes(patched)
+    try:
+        with args.output.open('xb') as output:
+            output.write(patched)
+    except FileExistsError:
+        parser.error(f'Output already exists: {args.output}')
     print('Original SHA256:', hashlib.sha256(original).hexdigest())
     print('Dispatcher length:', len(payload), 'bytes')
     print('Extension address:', hex(EXTENSION))
