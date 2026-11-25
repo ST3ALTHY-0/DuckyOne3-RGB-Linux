@@ -716,3 +716,8 @@ The custom RGB commands require modified keyboard firmware and are not supported
 Sending commands to incompatible firmware or using experimental flashing tools may cause unexpected behavior or device failure.
 
 The project is not affiliated with or endorsed by Ducky or Nuvoton.
+## V4 external RGB protocol
+
+V4 uses the same 64-byte interrupt vendor collection and preserves the stock handler. The V4 namespace begins `00 3A 52 34 E4`. Its independent receive slot records the actual received length before OUT rearm. Host request tags match replies and distinguish retransmissions from stale endpoint traffic.
+
+Use `tools/rgb_v4.py` for capability detection, session ownership, frame transactions and scanout status. The client supports explicit commit or an optional final-chunk commit. An accepted frame ID acknowledges assembly and CRC validation. A displayed ID acknowledges the stock scanout page selection. The [wire specification](reverse-engineering/v4-implementation-spec.md#exact-vendor-hid-v1-format) defines all opcodes, errors and overlay flags.

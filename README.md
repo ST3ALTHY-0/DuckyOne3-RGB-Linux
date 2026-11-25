@@ -480,3 +480,36 @@ Firmware modification can damage or disable hardware. No warranty or guarantee o
 ## License
 
 The original project source code is licensed under the [GNU General Public License, version 3](LICENSE) (GPL-3.0-only). Proprietary firmware and third-party components remain subject to their respective licenses.
+
+## V4 external RGB offline candidate
+
+V4 adds persistent external ownership, atomic 75-slot RGB8 frames, software brightness, and optional stock LED overlays. V4 retains the stock scheduler, keyboard input path, USB descriptors, and LED scanout driver. The standalone V3 patch remains reproducible and the stock/V3 recovery profiles retain their original hashes and checks. [V4 specification](docs/reverse-engineering/v4-implementation-spec.md)
+
+Build with Clang/LLD, llvm-objcopy, and GNU Arm binutils. Both builds require the exact extracted 42,942-byte stock V1.16 image. Output paths must be new.
+
+```sh
+python firmware/build_patch.py recovery_backup/vendor_v1.16.bin --version 3 --output /tmp/ducky-v3.bin
+python firmware/build_patch.py recovery_backup/vendor_v1.16.bin --version 4 --output /tmp/ducky-v4.bin
+python -m unittest discover -s tests -v
+```
+
+V4 produces an image, a JSON manifest, and a Thumb disassembly. The manifest records the stock and output hashes, patched bytes, branch targets, SRAM and stack estimates, and offline-only status. The current recovery tooling does not accept V4 images. The independent audit records a **NO-GO** for programming. [V4 hardware readiness report](docs/reverse-engineering/v4-hardware-readiness.md)
+
+The Linux CLI defaults to a local preview and opens HID only with `--send`. These commands preview frames without access to the keyboard.
+
+```sh
+python tools/ducky_rgb.py static ff2020
+python tools/ducky_rgb.py key 4 5 00ff00
+python tools/ducky_rgb.py gradient ff0000 0020ff
+python tools/ducky_rgb.py rainbow --fps 60
+```
+
+After separately authorized hardware validation, put `--send` before the subcommand to use a V4 device. `caps` verifies the protocol version and geometry. Ctrl-C closes an open external session and restores native lighting. Static displays can use `--leave-active` to retain the frame and print the token needed for `native TOKEN`. An optional `--lease-ms` enables timeout fallback. A single-key CLI invocation starts with a black source frame. The reusable controller updates individual keys in its locally committed frame.
+
+Grant read/write access to the matching hidraw node through your Linux device policy. On a systemd desktop a narrowly scoped rule such as `/etc/udev/rules.d/70-ducky-rgb.rules` can tag the device for the active local session.
+
+```udev
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="3233", ATTRS{idProduct}=="5311", TAG+="uaccess"
+```
+
+Use a site-managed group on systems without seat ACLs. The CLI validates the vendor report descriptor and protocol capabilities. It does not inspect LDROM or need root once device access is configured. [Protocol](docs/reverse-engineering/usb-protocol-design.md) · [Hardware validation and recovery](docs/reverse-engineering/v4-implementation-spec.md#hardware-validation-gates)

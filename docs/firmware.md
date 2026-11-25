@@ -586,3 +586,9 @@ All firmware modifications and flashing operations are performed at the user's o
 ### Read-only diagnostic APROM extension
 
 A future diagnostic build could expose bounded APROM, Data Flash and permitted LDROM readback, MCU-calculated checksums, bounded SRAM inspection, and hardware identification. Each read would require an explicit permitted address range and validated length. Arbitrary writes and execution are outside its scope. The extension would depend on working APROM, and no diagnostic extension or verified arbitrary USB flash readback command currently exists.
+
+## V4 external RGB extension
+
+Build V4 with `firmware/build_patch.py --version 4`. V3 remains the default. V4 appends the Cortex-M0 extension at `0xA7C0`, asserts the original bytes at nine patch sites, and preserves the stock command BL at `0x9646`. It adds explicit zero-initialized SRAM at `0x20002820–0x20002D1F` and uses guards around frame storage and at the reservation end. Guard damage revokes external ownership and latches a V4 fault until APROM startup.
+
+The reservation is defensible for traced stock paths, with unresolved indirect aliases and stack watermark. Guard checks detect specific writes and cannot detect every clobber. The full [V4 specification](reverse-engineering/v4-implementation-spec.md) defines additional debugger validation and the offline-to-hardware gate. V4 creates no persistent settings or flash jobs. Restore stock through the original [USB recovery procedure](../tools/recovery/README.md) with its existing identity, hash and explicit confirmation requirements.
