@@ -1,12 +1,13 @@
 # Ducky One 3 RGB Control
 
-Control your Ducky One 3 SF RGB keyboard’s lighting from Linux. The V4 firmware patch lets you set individual key colors, change brightness, and run effects from the command line. Colors stay active during the software control session, and you can return to the keyboard’s built-in lighting afterward.
 
-> **AI-assisted development.** This project was developed with significant help from AI tools. The maintainer tested V4 on a physical Ducky One 3 SF RGB keyboard and reported that it worked as expected.
+> **AI-assisted development.** This project was developed with significant help from AI tools. I have tested V4 on a physical Ducky One 3 SF RGB keyboard and it worked as expected.
 
 ## Compatibility
 
-V4 was tested on one **Ducky One 3 SF RGB** using the exact stock **V1.16** firmware image. The build and flash tools check the image, and the flasher also checks the keyboard’s bootloader and configuration. Other firmware versions and hardware revisions are untested. The command-line tools currently use Linux.
+V4 was tested on one **Ducky One 3 SF RGB** using the exact stock **V1.16** firmware image.  The build and flash tools check the image, and the flasher also checks the keyboard’s bootloader and configuration. Other firmware versions and hardware revisions are untested. The command-line tools currently use Linux.
+
+**Ducky_One_3_SF_RGB_V1.16 is required to be installed on keyboard for this firmware flash to work!**
 
 Flashing experimental firmware can leave the keyboard unusable. Read the [USB recovery guide](tools/recovery/README.md) before programming. The stock firmware is proprietary and must be supplied separately.
 
