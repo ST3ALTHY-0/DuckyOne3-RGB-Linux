@@ -1,0 +1,1 @@
+"""Ducky RGB Studio."""

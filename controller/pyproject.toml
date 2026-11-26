@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ducky-rgb-studio"
+version = "0.1.2"
+description = "Ducky RGB Studio desktop lighting editor"
+readme = "README.md"
+requires-python = ">=3.11,<3.15"
+license = "GPL-3.0-only"
+license-files = ["LICENSE"]
+dependencies = ["numpy>=1.26", "platformdirs>=4", "PySide6>=6.8", "hidapi>=0.14"]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+bundle = ["pyinstaller>=6.13"]
+
+[project.gui-scripts]
+ducky-rgb = "ducky_rgb.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.setuptools.package-data]
+ducky_rgb = ["assets/*.png"]
