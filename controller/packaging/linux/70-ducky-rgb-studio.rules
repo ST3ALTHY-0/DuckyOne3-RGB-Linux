@@ -1,0 +1,3 @@
+# Stock V1.16 / V4 APROM interface zero only. No keyboards or LDROM.
+SUBSYSTEM=="hidraw", KERNEL=="hidraw*", ATTRS{bInterfaceNumber}=="00", IMPORT{builtin}="usb_id"
+SUBSYSTEM=="hidraw", KERNEL=="hidraw*", ENV{ID_VENDOR_ID}=="3233", ENV{ID_MODEL_ID}=="5311", ENV{ID_USB_INTERFACE_NUM}=="00", TAG+="uaccess"

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Ducky RGB Studio
+Comment=Edit Ducky V4 lighting profiles
+Exec=ducky-rgb
+Icon=ducky-rgb-studio
+Terminal=false
+Categories=Utility;Settings;

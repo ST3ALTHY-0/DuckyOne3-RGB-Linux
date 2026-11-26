@@ -1,0 +1,63 @@
+name: Controller
+on:
+  push:
+    paths: ['controller/**', 'tools/rgb_v4.py', '.github/workflows/controller.yml']
+  pull_request:
+    paths: ['controller/**', 'tools/rgb_v4.py', '.github/workflows/controller.yml']
+  workflow_dispatch:
+
+jobs:
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-latest, macos-latest]
+        python: ['3.11', '3.13']
+    runs-on: ${{ matrix.os }}
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libxkbcommon0
+      - run: python -m pip install "./controller[test]"
+      - run: python -m pytest controller/tests
+      - run: python -m ducky_rgb --smoke-test
+      - run: python -m pip wheel --no-deps ./controller -w controller/dist
+
+  native:
+    if: github.event_name == 'workflow_dispatch'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libxkbcommon0
+      - run: python -m pip install "./controller[bundle]"
+      - run: python controller/packaging/build.py --smoke
+      - if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (Test-Path $iscc) {
+            & $iscc "/O$PWD\controller\dist" "$PWD\controller\packaging\windows\studio.iss"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          } else { Write-Host "Inno Setup unavailable. Portable ZIP assembled." }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: studio-${{ matrix.os }}
+          path: |
+            controller/dist/*.zip
+            controller/dist/*.exe
+            controller/dist/*.dmg
+            controller/dist/*.tar.gz
+          if-no-files-found: error
